@@ -1,12 +1,12 @@
-const Home = ({ onOrganizer, onJoin }) => {
+const Acasa = ({ peOrganizator, peInscriere }) => {
   return (
     <div className="surface" style={{ textAlign: "center" }}>
       <h2>Alege modul</h2>
       <div className="hero-actions" style={{ justifyContent: "center", marginTop: 12 }}>
-        <button className="btn primary" onClick={onOrganizer}>
+        <button className="btn primary" onClick={peOrganizator}>
           Modul organizator
         </button>
-        <button className="btn ghost" onClick={onJoin}>
+        <button className="btn ghost" onClick={peInscriere}>
           Modul participant
         </button>
       </div>
@@ -14,4 +14,4 @@ const Home = ({ onOrganizer, onJoin }) => {
   );
 };
 
-export default Home;
+export default Acasa;

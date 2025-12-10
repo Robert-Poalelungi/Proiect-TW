@@ -87,30 +87,30 @@ Componente principale:
 
 ------------------------------------------------------------------------
 
-## 🟢 4.2. Backend -- Node.js + Express
+## 🟢 4.2. Backend -- Node.js + Express + Sequelize (MySQL)
 
--   rulează pe `http://localhost:4000`,
--   date stocate in-memory (simplu, exact cât cere tema),
--   expune un API REST pentru:
-    -   gestionarea evenimentelor,
-    -   înregistrarea participanților,
-    -   export CSV.
+- rulează pe `http://localhost:4000`,
+- persistă datele în MySQL prin **Sequelize** (stil seminare),
+- expune un API REST pentru:
+  - gestionarea grupurilor/evenimentelor,
+  - înregistrarea participanților,
+  - export CSV.
 
 Funcționalitate principală:
 
--   generare cod unic (automat),
--   determinarea statusului OPEN/CLOSED,
--   stocare participanți și ore,
--   generare CSV.
+- generare cod unic (automat),
+- determinarea statusului OPEN/CLOSED,
+- stocare participanți și ore în DB,
+- generare CSV.
 
 ------------------------------------------------------------------------
 
 # 🧱 5. Structura proiectului
 
-## 📂 Frontend (`presence-monitor/`)
+## 📂 Frontend (`frontend/`)
 
     src/
-     ├── App.jsx
+  ├── components/App.jsx
      ├── api.js
      ├── main.jsx
      ├── components/
@@ -119,10 +119,25 @@ Funcționalitate principală:
      │    ├── Join.jsx
      │    └── EventDetails.jsx
 
-## 📂 Backend (`presence-backend/`)
+## 📂 Backend (`backend/`)
 
     index.js
-    package.json
+    dbConfig.js
+    entities/
+      ├── EventGroup.js
+      ├── Event.js
+      ├── Participant.js
+      └── associations.js
+    dataAccess/
+    routes/
+    .env.example
+
+  ### 🔧 Setup rapid (backend)
+
+  1. Editează `.env` și setează credențialele MySQL (DB_DATABASE=prezente).
+  2. Instalează dependențele: `cd backend && npm install`.
+  3. Inițializează tabelele: `npm start` apoi `GET http://localhost:4000/api/config/init`.
+  4. Rulează frontend-ul: `cd ../frontend && npm install && npm run dev`.
 
 ------------------------------------------------------------------------
 

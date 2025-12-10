@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { joinEvent } from "../api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { inscrieLaEveniment } from "../api";
 import jsQR from "jsqr";
 
-const Join = () => {
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-  const [status, setStatus] = useState(null);
-  const [scanning, setScanning] = useState(false);
-  const [cameraReady, setCameraReady] = useState(false);
-  const [scanError, setScanError] = useState("");
+const Inscriere = () => {
+  const [cod, setCod] = useState("");
+  const [nume, setNume] = useState("");
+  const [mesaj, setMesaj] = useState("");
+  const [stare, setStare] = useState(null);
+  const [scaneaza, setScaneaza] = useState(false);
+  const [cameraGata, setCameraGata] = useState(false);
+  const [eroareScanare, setEroareScanare] = useState("");
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -17,35 +17,35 @@ const Join = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setStatus(null);
+    setMesaj("");
+    setStare(null);
 
-    if (!code || !name) {
-      setMessage("Completează codul și numele.");
+    if (!cod || !nume) {
+      setMesaj("Completează codul și numele.");
       return;
     }
 
     try {
-      const res = await joinEvent({ code, name });
-      setStatus("success");
-      setMessage(`Ai intrat la ${res.event.name}. Status: ${res.event.status}.`);
-      setCode("");
-      setName("");
+      const res = await inscrieLaEveniment({ cod, nume });
+      setStare("success");
+      setMesaj(`Ai intrat la ${res.eveniment.nume}. Status: ${res.eveniment.status}.`);
+      setCod("");
+      setNume("");
     } catch (err) {
-      setStatus("error");
-      setMessage(err.message || "Nu s-a putut înregistra prezența.");
+      setStare("error");
+      setMesaj(err.message || "Nu s-a putut înregistra prezența.");
     }
   };
 
-  const stopScanner = () => {
-    setScanning(false);
-    setCameraReady(false);
+  const stopScanner = useCallback(() => {
+    setScaneaza(false);
+    setCameraGata(false);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  };
+  }, []);
 
   const tick = () => {
     const video = videoRef.current;
@@ -66,8 +66,8 @@ const Join = () => {
     const imageData = ctx.getImageData(0, 0, w, h);
     const codeResult = jsQR(imageData.data, w, h);
     if (codeResult && codeResult.data) {
-      setCode(codeResult.data.toUpperCase());
-      setMessage("Cod QR detectat, apasă Confirmă.");
+      setCod(codeResult.data.toUpperCase());
+      setMesaj("Cod QR detectat, apasă Confirmă.");
       stopScanner();
       return;
     }
@@ -76,27 +76,26 @@ const Join = () => {
   };
 
   const startScanner = async () => {
-    setScanError("");
-    setCameraReady(false);
+    setEroareScanare("");
+    setCameraGata(false);
     try {
-      setScanning(true);
+      setScaneaza(true);
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        videoRef.current.onloadedmetadata = () => setCameraReady(true);
+        videoRef.current.onloadedmetadata = () => setCameraGata(true);
       }
       rafRef.current = requestAnimationFrame(tick);
     } catch (err) {
-      setScanError("Nu pot porni camera. Permite accesul video.");
+      setEroareScanare("Nu pot porni camera. Permite accesul video.");
     }
   };
 
   useEffect(() => {
     return () => stopScanner();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [stopScanner]);
 
   return (
     <div className="surface">
@@ -104,28 +103,28 @@ const Join = () => {
       <p className="small">Introdu codul de 6 caractere și numele tău.</p>
       <form onSubmit={handleSubmit} className="grid">
         <div className="input-row">
-          <label className="label" htmlFor="code">
+          <label className="label" htmlFor="cod">
             Cod eveniment
           </label>
           <input
-            id="code"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            id="cod"
+            value={cod}
+            onChange={(e) => setCod(e.target.value.toUpperCase())}
             placeholder="ABC123"
             maxLength={6}
           />
           <div className="actions" style={{ gap: 6, marginTop: 6 }}>
-            <button type="button" className="btn ghost" onClick={startScanner} disabled={scanning}>
-              {scanning ? "Scanner activ" : "Scanează QR"}
+            <button type="button" className="btn ghost" onClick={startScanner} disabled={scaneaza}>
+              {scaneaza ? "Scanner activ" : "Scanează QR"}
             </button>
-            {scanning && (
+            {scaneaza && (
               <button type="button" className="btn text" onClick={stopScanner}>
                 Oprește
               </button>
             )}
           </div>
-          {scanError && <p className="small" style={{ color: "#b91c1c" }}>{scanError}</p>}
-          {scanning && (
+          {eroareScanare && <p className="small" style={{ color: "#b91c1c" }}>{eroareScanare}</p>}
+          {scaneaza && (
             <div style={{ marginTop: 8 }}>
               <div className="small" style={{ marginBottom: 6 }}>
                 Previzualizare cameră (QR trebuie să fie clar în cadru)
@@ -148,7 +147,7 @@ const Join = () => {
               />
               <canvas ref={canvasRef} style={{ display: "none" }} />
               <p className="small">
-                {cameraReady
+                {cameraGata
                   ? "Îndreaptă camera spre codul QR al evenimentului."
                   : "Se pornește camera... dacă nu apare imaginea, permite accesul video sau încearcă camera frontală."}
               </p>
@@ -156,13 +155,13 @@ const Join = () => {
           )}
         </div>
         <div className="input-row">
-          <label className="label" htmlFor="name">
+          <label className="label" htmlFor="nume">
             Numele tău
           </label>
           <input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            id="nume"
+            value={nume}
+            onChange={(e) => setNume(e.target.value)}
             placeholder="Prenume Nume"
           />
         </div>
@@ -171,9 +170,9 @@ const Join = () => {
             Confirmă prezența
           </button>
         </div>
-        {message && (
-          <p className="small" style={{ color: status === "error" ? "#b91c1c" : "#15803d" }}>
-            {message}
+        {mesaj && (
+          <p className="small" style={{ color: stare === "error" ? "#b91c1c" : "#15803d" }}>
+            {mesaj}
           </p>
         )}
       </form>
@@ -181,4 +180,4 @@ const Join = () => {
   );
 };
 
-export default Join;
+export default Inscriere;

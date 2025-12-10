@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
-import { exportEventCsv, getEvent, getParticipants } from "../api";
+import { exportaEvenimentCsv, obtineEveniment, obtineParticipanti } from "../api";
 import { makeQrData } from "../qr";
 
-const EventDetails = ({ eventId, onBack }) => {
-  const [event, setEvent] = useState(null);
-  const [participants, setParticipants] = useState([]);
+const DetaliiEveniment = ({ eventId, onBack }) => {
+  const [eveniment, setEveniment] = useState(null);
+  const [participanti, setParticipanti] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [mesaj, setMesaj] = useState("");
   const [qrData, setQrData] = useState("");
 
   const load = async () => {
     try {
       setLoading(true);
-      setMessage("");
-      const [ev, part] = await Promise.all([getEvent(eventId), getParticipants(eventId)]);
-      setEvent(ev);
-      setParticipants(part);
-      const dataUrl = await makeQrData(ev.code);
+      setMesaj("");
+      const [ev, part] = await Promise.all([obtineEveniment(eventId), obtineParticipanti(eventId)]);
+      setEveniment(ev);
+      setParticipanti(part);
+      const dataUrl = await makeQrData(ev.cod);
       setQrData(dataUrl);
     } catch (err) {
-      setMessage(err.message || "Nu s-au putut încărca detaliile evenimentului.");
+      setMesaj(err.message || "Nu s-au putut încărca detaliile evenimentului.");
     } finally {
       setLoading(false);
     }
@@ -31,20 +31,20 @@ const EventDetails = ({ eventId, onBack }) => {
 
   const handleExport = async () => {
     try {
-      const res = await exportEventCsv(eventId);
+      const res = await exportaEvenimentCsv(eventId);
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `event-${eventId}.csv`;
+      link.download = `eveniment-${eventId}.csv`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setMessage(err.message || "Export nereușit.");
+      setMesaj(err.message || "Export nereușit.");
     }
   };
 
-  if (!event) {
+  if (!eveniment) {
     return (
       <div className="surface">
         <p>Se încarcă detaliile evenimentului...</p>
@@ -52,20 +52,20 @@ const EventDetails = ({ eventId, onBack }) => {
     );
   }
 
-  const statusClass = event.status === "OPEN" ? "status-open" : "status-closed";
+  const statusClass = eveniment.status === "OPEN" ? "status-open" : "status-closed";
 
   return (
     <div className="surface">
       <div className="actions" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h2 style={{ margin: "0 0 4px" }}>{event.name}</h2>
-          <div className="small">Cod: {event.code}</div>
+          <h2 style={{ margin: "0 0 4px" }}>{eveniment.nume}</h2>
+          <div className="small">Cod: {eveniment.cod}</div>
           <div className="small">
-            {new Date(event.startTime).toLocaleString()} — {new Date(event.endTime).toLocaleString()}
+            {new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}
           </div>
         </div>
         <div className="actions">
-          <span className={`status-pill ${statusClass}`}>{event.status}</span>
+          <span className={`status-pill ${statusClass}`}>{eveniment.status}</span>
           <button className="btn ghost" onClick={load} disabled={loading}>
             Reîncarcă
           </button>
@@ -85,13 +85,13 @@ const EventDetails = ({ eventId, onBack }) => {
             <div className="small">Scanează sau descarcă pentru distribuire rapidă.</div>
           </div>
           <div className="actions" style={{ alignItems: "center" }}>
-            <img src={qrData} alt={`QR pentru ${event.code}`} width={140} height={140} />
+            <img src={qrData} alt={`QR pentru ${eveniment.cod}`} width={140} height={140} />
             <button
               className="btn ghost"
               onClick={() => {
                 const link = document.createElement("a");
                 link.href = qrData;
-                link.download = `event-${event.id}-qr.png`;
+                link.download = `eveniment-${eveniment.id}-qr.png`;
                 link.click();
               }}
             >
@@ -101,16 +101,16 @@ const EventDetails = ({ eventId, onBack }) => {
         </div>
       )}
 
-      {message && <p className="small" style={{ color: "#b91c1c" }}>{message}</p>}
+      {mesaj && <p className="small" style={{ color: "#b91c1c" }}>{mesaj}</p>}
 
-      <h3>Participanți ({participants.length})</h3>
+      <h3>Participanți ({participanti.length})</h3>
       <div className="list">
-        {participants.length === 0 && <p>Niciun participant încă.</p>}
-        {participants.map((p, idx) => (
+        {participanti.length === 0 && <p>Niciun participant încă.</p>}
+        {participanti.map((p, idx) => (
           <div key={idx} className="list-item" style={{ justifyContent: "space-between" }}>
             <div>
-              <strong>{p.name}</strong>
-              <div className="small">{new Date(p.joinedAt).toLocaleString()}</div>
+              <strong>{p.nume}</strong>
+              <div className="small">{new Date(p.inscrisLa).toLocaleString()}</div>
             </div>
           </div>
         ))}
@@ -119,4 +119,4 @@ const EventDetails = ({ eventId, onBack }) => {
   );
 };
 
-export default EventDetails;
+export default DetaliiEveniment;
