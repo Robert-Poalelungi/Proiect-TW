@@ -87,6 +87,45 @@ app.post("/api/event-groups", (req, res) => {
   });
 });
 
+// POST append events to existing group
+app.post("/api/event-groups/:id/events", (req, res) => {
+  const group = eventGroups.find((g) => g.id === req.params.id);
+  const incomingEvents = req.body?.events;
+
+  if (!group) {
+    return res.status(404).json({ error: "Group not found." });
+  }
+  if (!Array.isArray(incomingEvents) || incomingEvents.length === 0) {
+    return res.status(400).json({ error: "Provide at least one event." });
+  }
+
+  const created = [];
+  incomingEvents.forEach((ev) => {
+    const { name: eventName, startTime, endTime } = ev;
+    if (!eventName || !startTime || !endTime) return;
+
+    const eventId = String(eventCounter++);
+    const eventObj = {
+      id: eventId,
+      groupId: group.id,
+      name: eventName,
+      startTime,
+      endTime,
+      code: generateCode(),
+      participants: [],
+    };
+    events.set(eventId, eventObj);
+    group.events.push(eventId);
+    created.push({ ...eventObj, status: computeStatus(eventObj) });
+  });
+
+  if (created.length === 0) {
+    return res.status(400).json({ error: "No valid events provided." });
+  }
+
+  res.status(201).json({ added: created, group });
+});
+
 // POST join event by code
 app.post("/api/join", (req, res) => {
   const { code, name } = req.body || {};

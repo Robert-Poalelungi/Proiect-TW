@@ -33,12 +33,7 @@ function App() {
     <div className="app-shell">
       <header className="hero">
         <div className="hero-copy">
-          <p className="badge">Monitorizare prezență</p>
-          <h1>SPA React + Node</h1>
-          <p className="subtitle">
-            Creează evenimente, distribuie codul unic și urmărește live
-            participanții. Backend-ul rulează local, fără baze de date.
-          </p>
+          <h1>Aplicație Prezență</h1>
           <div className="hero-actions">
             <button className="btn primary" onClick={openOrganizer}>
               Modul organizator
@@ -46,19 +41,7 @@ function App() {
             <button className="btn ghost" onClick={openJoin}>
               Modul participant
             </button>
-            <button className="btn text" onClick={goHome}>
-              Acasă
-            </button>
           </div>
-        </div>
-        <div className="hero-card">
-          <p className="card-title">Flux rapid</p>
-          <ul>
-            <li>Grupuri + evenimente multiple</li>
-            <li>Cod unic automat (6 caractere)</li>
-            <li>OPEN/CLOSED calculat pe baza timpului</li>
-            <li>Export CSV pentru eveniment sau grup</li>
-          </ul>
         </div>
       </header>
 

@@ -52,7 +52,7 @@ const Join = () => {
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const w = video.videoWidth;
     const h = video.videoHeight;
     if (!w || !h) {

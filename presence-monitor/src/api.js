@@ -49,6 +49,12 @@ export const deleteGroup = (groupId) =>
     method: "DELETE",
   });
 
+export const addEventsToGroup = (groupId, events) =>
+  request(`/event-groups/${groupId}/events`, {
+    method: "POST",
+    body: JSON.stringify({ events }),
+  });
+
 export const exportEventCsv = async (eventId) => {
   const res = await fetch(`${API_BASE}/export/event/${eventId}`);
   if (!res.ok) throw new Error("Nu s-a putut exporta CSV-ul evenimentului.");

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  addEventsToGroup,
   createGroup,
   deleteEvent,
   deleteGroup,
@@ -15,6 +16,8 @@ const Organizer = ({ onOpenEvent }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [addForms, setAddForms] = useState({});
+  const [expanded, setExpanded] = useState({});
 
   const loadGroups = async () => {
     try {
@@ -105,6 +108,39 @@ const Organizer = ({ onOpenEvent }) => {
       await loadGroups();
     } catch (err) {
       setMessage(err.message || "Nu s-a putut șterge grupul.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAddForm = (groupId, key, value) => {
+    setAddForms((prev) => ({
+      ...prev,
+      [groupId]: { ...(prev[groupId] || {}), [key]: value },
+    }));
+  };
+
+  const handleAddEvent = async (groupId) => {
+    const form = addForms[groupId] || {};
+    if (!form.name || !form.startTime || !form.endTime) {
+      setMessage("Completează nume, start și end pentru eveniment.");
+      return;
+    }
+    try {
+      setLoading(true);
+      await addEventsToGroup(groupId, [
+        {
+          name: form.name,
+          startTime: form.startTime,
+          endTime: form.endTime,
+        },
+      ]);
+      setMessage("Eveniment adăugat în grup.");
+      setAddForms((prev) => ({ ...prev, [groupId]: { name: "", startTime: "", endTime: "" } }));
+      setExpanded((prev) => ({ ...prev, [groupId]: false }));
+      await loadGroups();
+    } catch (err) {
+      setMessage(err.message || "Nu s-a putut adăuga evenimentul.");
     } finally {
       setLoading(false);
     }
@@ -219,6 +255,50 @@ const Organizer = ({ onOpenEvent }) => {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                <div className="actions" style={{ width: "100%", justifyContent: "space-between" }}>
+                  <div className="label">Eveniment nou în acest grup</div>
+                  <button
+                    className="btn ghost"
+                    type="button"
+                    onClick={() => setExpanded((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
+                  >
+                    {expanded[group.id] ? "Ascunde" : "Adaugă"}
+                  </button>
+                </div>
+                {expanded[group.id] && (
+                  <>
+                    <input
+                      value={addForms[group.id]?.name || ""}
+                      onChange={(e) => updateAddForm(group.id, "name", e.target.value)}
+                      placeholder="Nume eveniment"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={addForms[group.id]?.startTime || ""}
+                      onChange={(e) => updateAddForm(group.id, "startTime", e.target.value)}
+                    />
+                    <input
+                      type="datetime-local"
+                      value={addForms[group.id]?.endTime || ""}
+                      onChange={(e) => updateAddForm(group.id, "endTime", e.target.value)}
+                    />
+                    <div className="actions" style={{ gap: 8 }}>
+                      <button className="btn primary" type="button" onClick={() => handleAddEvent(group.id)} disabled={loading}>
+                        {loading ? "Se adaugă..." : "Adaugă în grup"}
+                      </button>
+                      <button
+                        className="btn text"
+                        type="button"
+                        onClick={() => setAddForms((prev) => ({ ...prev, [group.id]: { name: "", startTime: "", endTime: "" } }))}
+                      >
+                        Resetează
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}
