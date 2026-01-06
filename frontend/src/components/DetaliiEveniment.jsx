@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { exportaEvenimentCsv, obtineEveniment, obtineParticipanti } from "../api";
 import { makeQrData } from "../qr";
 
+const etichetaStatus = (status) => status;
+
 const DetaliiEveniment = ({ eventId, onBack }) => {
   const [eveniment, setEveniment] = useState(null);
   const [participanti, setParticipanti] = useState([]);
@@ -52,7 +54,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
     );
   }
 
-  const statusClass = eveniment.status === "OPEN" ? "status-open" : "status-closed";
+  const statusClass = eveniment.status === "DESCHIS" ? "status-open" : "status-closed";
 
   return (
     <div className="surface">
@@ -65,7 +67,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
           </div>
         </div>
         <div className="actions">
-          <span className={`status-pill ${statusClass}`}>{eveniment.status}</span>
+          <span className={`status-pill ${statusClass}`}>{etichetaStatus(eveniment.status)}</span>
           <button className="btn ghost" onClick={load} disabled={loading}>
             Reîncarcă
           </button>

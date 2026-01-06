@@ -162,7 +162,7 @@ const Inscriere = () => {
             id="nume"
             value={nume}
             onChange={(e) => setNume(e.target.value)}
-            placeholder="Prenume Nume"
+            placeholder="Nume Prenume"
           />
         </div>
         <div className="actions">

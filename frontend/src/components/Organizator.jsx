@@ -9,6 +9,7 @@ import {
 } from "../api";
 
 const evenimentGol = { nume: "", inceput: "", sfarsit: "" };
+const etichetaStatus = (status) => status;
 
 const Organizator = ({ peDeschideEveniment }) => {
   const [numeGrup, setNumeGrup] = useState("");
@@ -158,7 +159,7 @@ const Organizator = ({ peDeschideEveniment }) => {
   return (
     <div className="grid two-col">
       <div className="surface">
-        <h2>Creează grup + evenimente</h2>
+        <h2>Creează grup și evenimente</h2>
         <form onSubmit={gestioneazaSubmit} className="grid">
           <div className="input-row">
             <label className="label" htmlFor="groupName">
@@ -168,7 +169,7 @@ const Organizator = ({ peDeschideEveniment }) => {
               id="groupName"
               value={numeGrup}
               onChange={(e) => setNumeGrup(e.target.value)}
-              placeholder="Ex: Săptămâna 12 - laborator"
+              placeholder="Ex: Săptămâna 1"
             />
           </div>
 
@@ -231,7 +232,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                   <button className="btn ghost" onClick={() => exportaGrup(group.id)}>
                     Export CSV grup
                   </button>
-                  <button className="btn text" onClick={() => stergeGrupHandler(group.id)}>
+                  <button className="btn ghost danger" onClick={() => stergeGrupHandler(group.id)}>
                     Șterge grup
                   </button>
                 </div>
@@ -250,15 +251,15 @@ const Organizator = ({ peDeschideEveniment }) => {
                     <div className="actions">
                       <span
                         className={`status-pill ${
-                          eveniment.status === "OPEN" ? "status-open" : "status-closed"
+                          eveniment.status === "DESCHIS" ? "status-open" : "status-closed"
                         }`}
                       >
-                        {eveniment.status}
+                        {etichetaStatus(eveniment.status)}
                       </span>
                       <button className="btn primary" onClick={() => peDeschideEveniment(eveniment.id)}>
                         Detalii
                       </button>
-                      <button className="btn ghost" onClick={() => stergeEvenimentHandler(eveniment.id)}>
+                      <button className="btn ghost danger" onClick={() => stergeEvenimentHandler(eveniment.id)}>
                         Șterge
                       </button>
                     </div>

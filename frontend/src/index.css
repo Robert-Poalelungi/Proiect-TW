@@ -1,11 +1,7 @@
 :root {
   font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
   color: #0e1116;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(116, 83, 255, 0.25), transparent 30%),
-    radial-gradient(circle at 85% 10%, rgba(64, 132, 255, 0.25), transparent 28%),
-    radial-gradient(circle at 20% 80%, rgba(57, 181, 74, 0.12), transparent 32%),
-    linear-gradient(135deg, #eef1ff 0%, #f4f2ff 60%, #f5fbff 100%);
+  background: #d3cdd7;
   min-height: 100vh;
 }
 
@@ -16,7 +12,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: transparent;
+  background: #d3cdd7;
 }
 
 a {

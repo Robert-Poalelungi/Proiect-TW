@@ -14,7 +14,7 @@ exportRouter.get("/eveniment/:id", async (req, res) => {
   const ev = await gasesteEvenimentDupaId(req.params.id);
   if (!ev) return res.status(404).json({ error: "Evenimentul nu există." });
 
-  const lines = ["Nume,Înscris La"];
+  const lines = ["Nume,Inscris La"];
   const participants = ev.Participants || [];
   participants.forEach((p) => {
     lines.push(`${p.nume},${p.inscrisLa}`);
@@ -28,7 +28,7 @@ exportRouter.get("/grup/:id", async (req, res) => {
   if (!group) return res.status(404).json({ error: "Grupul nu există." });
 
   const expanded = await extindeGrup(group);
-  const lines = ["Eveniment,Nume,Înscris La"];
+  const lines = ["Eveniment,Nume,Inscris La"];
 
   expanded.Events.forEach((ev) => {
     const participants = ev.Participants || [];
