@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { inscrieLaEveniment } from "../api";
+import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
+import { inscrieLaEveniment } from "../api";
 
 const Inscriere = () => {
   const [cod, setCod] = useState("");
   const [nume, setNume] = useState("");
   const [mesaj, setMesaj] = useState("");
   const [stare, setStare] = useState(null);
+  const [scanErr, setScanErr] = useState("");
   const [scaneaza, setScaneaza] = useState(false);
-  const [cameraGata, setCameraGata] = useState(false);
-  const [eroareScanare, setEroareScanare] = useState("");
+  const [areCadru, setAreCadru] = useState(false);
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
   const streamRef = useRef(null);
+  const detectRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ const Inscriere = () => {
     setStare(null);
 
     if (!cod || !nume) {
-      setMesaj("Completează codul și numele.");
+      setMesaj("Completeaza codul si numele.");
       return;
     }
 
@@ -33,79 +33,125 @@ const Inscriere = () => {
       setNume("");
     } catch (err) {
       setStare("error");
-      setMesaj(err.message || "Nu s-a putut înregistra prezența.");
+      setMesaj(err.message || "Nu s-a putut inregistra prezenta.");
     }
   };
 
-  const stopScanner = useCallback(() => {
+  const opresteScan = () => {
     setScaneaza(false);
-    setCameraGata(false);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    setAreCadru(false);
+    if (detectRef.current) {
+      cancelAnimationFrame(detectRef.current);
+      detectRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }, []);
-
-  const tick = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) {
-      rafRef.current = requestAnimationFrame(tick);
-      return;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
-
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(video, 0, 0, w, h);
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const codeResult = jsQR(imageData.data, w, h);
-    if (codeResult && codeResult.data) {
-      setCod(codeResult.data.toUpperCase());
-      setMesaj("Cod QR detectat, apasă Confirmă.");
-      stopScanner();
-      return;
-    }
-
-    rafRef.current = requestAnimationFrame(tick);
   };
 
-  const startScanner = async () => {
-    setEroareScanare("");
-    setCameraGata(false);
+  useEffect(() => () => opresteScan(), []);
+
+  const pornesteScan = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setScanErr("Camera nu e disponibila.");
+      return;
+    }
     try {
-      setScaneaza(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      setScanErr("");
+      opresteScan();
+
+      let stream = null;
+      const tries = [
+        { video: { facingMode: { ideal: "environment" } } },
+        { video: true },
+      ];
+      for (const c of tries) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          break;
+        } catch (e) {
+          // continue
+        }
+      }
+      if (!stream) throw new Error("no-stream");
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        videoRef.current.onloadedmetadata = () => setCameraGata(true);
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {});
+        };
+        await videoRef.current.play().catch(() => {});
       }
-      rafRef.current = requestAnimationFrame(tick);
+
+      setScaneaza(true);
+
+      // daca dupa 1.5s nu avem cadru, avertizeaza
+      setTimeout(() => {
+        if (scaneaza && videoRef.current && (!videoRef.current.videoWidth || !videoRef.current.videoHeight)) {
+          setScanErr("Camera nu trimite imagine. Permite accesul sau incearca alt browser.");
+        }
+      }, 1500);
+
+      const detector = window.BarcodeDetector ? new window.BarcodeDetector({ formats: ["qr_code"] }) : null;
+
+      const tick = async () => {
+        if (!videoRef.current) return;
+        try {
+          if (detector) {
+            const codes = await detector.detect(videoRef.current);
+            if (codes && codes.length > 0) {
+              const val = (codes[0].rawValue || "").trim();
+              if (val) {
+                setCod(val.toUpperCase());
+                opresteScan();
+                return;
+              }
+            }
+          } else if (canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            if (!video.videoWidth || !video.videoHeight) {
+              setAreCadru(false);
+              detectRef.current = requestAnimationFrame(tick);
+              return;
+            }
+            setAreCadru(true);
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(data.data, data.width, data.height, { inversionAttempts: "dontInvert" });
+            if (code && code.data) {
+              setCod(code.data.trim().toUpperCase());
+              opresteScan();
+              return;
+            }
+          }
+        } catch (e) {
+          // ignore detector noise
+        }
+        detectRef.current = requestAnimationFrame(tick);
+      };
+
+      detectRef.current = requestAnimationFrame(tick);
     } catch (err) {
-      setEroareScanare("Nu pot porni camera. Permite accesul video.");
+      setScanErr("Nu merge camera. Permite accesul sau foloseste https/localhost.");
+      opresteScan();
     }
   };
 
-  useEffect(() => {
-    return () => stopScanner();
-  }, [stopScanner]);
-
   return (
     <div className="surface">
-      <h2>Confirmă prezența</h2>
-      <p className="small">Introdu codul de 6 caractere și numele tău.</p>
+      <h2>Confirma prezenta</h2>
       <form onSubmit={handleSubmit} className="grid">
         <div className="input-row">
-          <label className="label" htmlFor="cod">
-            Cod eveniment
-          </label>
+          <label className="label" htmlFor="cod">Cod eveniment</label>
           <input
             id="cod"
             value={cod}
@@ -113,51 +159,33 @@ const Inscriere = () => {
             placeholder="ABC123"
             maxLength={6}
           />
-          <div className="actions" style={{ gap: 6, marginTop: 6 }}>
-            <button type="button" className="btn ghost" onClick={startScanner} disabled={scaneaza}>
-              {scaneaza ? "Scanner activ" : "Scanează QR"}
+          <div className="actions" style={{ marginTop: 4 }}>
+            <button className="btn ghost" type="button" onClick={pornesteScan} disabled={scaneaza}>
+              Scan QR
             </button>
             {scaneaza && (
-              <button type="button" className="btn text" onClick={stopScanner}>
-                Oprește
+              <button className="btn text" type="button" onClick={opresteScan}>
+                Opreste
               </button>
             )}
           </div>
-          {eroareScanare && <p className="small" style={{ color: "#b91c1c" }}>{eroareScanare}</p>}
+          {scanErr && <p className="small" style={{ color: "#b91c1c" }}>{scanErr}</p>}
           {scaneaza && (
-            <div style={{ marginTop: 8 }}>
-              <div className="small" style={{ marginBottom: 6 }}>
-                Previzualizare cameră (QR trebuie să fie clar în cadru)
-              </div>
+            <div style={{ marginTop: 6 }}>
               <video
                 ref={videoRef}
-                style={{
-                  width: "100%",
-                  maxWidth: "520px",
-                  aspectRatio: "4 / 3",
-                  background: "#f8fafc",
-                  borderRadius: 10,
-                  border: "1px solid #e2e8f0",
-                  objectFit: "cover",
-                  display: "block",
-                }}
+                autoPlay
                 muted
                 playsInline
-                autoPlay
+                style={{ width: "100%", maxWidth: 260, height: 200, objectFit: "cover", border: "1px solid #e5e7eb", background: "#f8fafc" }}
               />
               <canvas ref={canvasRef} style={{ display: "none" }} />
-              <p className="small">
-                {cameraGata
-                  ? "Îndreaptă camera spre codul QR al evenimentului."
-                  : "Se pornește camera... dacă nu apare imaginea, permite accesul video sau încearcă camera frontală."}
-              </p>
+              {!areCadru && <p className="small" style={{ marginTop: 4 }}>Se asteapta imaginea de la camera...</p>}
             </div>
           )}
         </div>
         <div className="input-row">
-          <label className="label" htmlFor="nume">
-            Numele tău
-          </label>
+          <label className="label" htmlFor="nume">Numele tau</label>
           <input
             id="nume"
             value={nume}
@@ -167,7 +195,7 @@ const Inscriere = () => {
         </div>
         <div className="actions">
           <button className="btn primary" type="submit">
-            Confirmă prezența
+            Confirma
           </button>
         </div>
         {mesaj && (

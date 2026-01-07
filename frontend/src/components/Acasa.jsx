@@ -1,14 +1,10 @@
 const Acasa = ({ peOrganizator, peInscriere }) => {
   return (
     <div className="surface" style={{ textAlign: "center" }}>
-      <h2>Alege modul</h2>
-      <div className="hero-actions" style={{ justifyContent: "center", marginTop: 12 }}>
-        <button className="btn primary" onClick={peOrganizator}>
-          Modul organizator
-        </button>
-        <button className="btn ghost" onClick={peInscriere}>
-          Modul participant
-        </button>
+      <h2>Start</h2>
+      <div className="actions" style={{ justifyContent: "center" }}>
+        <button className="btn primary" onClick={peOrganizator}>Organizator</button>
+        <button className="btn ghost" onClick={peInscriere}>Participant</button>
       </div>
     </div>
   );

@@ -157,21 +157,17 @@ const Organizator = ({ peDeschideEveniment }) => {
   };
 
   return (
-    <div className="grid two-col">
+    <div className="content">
       <div className="surface">
-        <h2>Creează grup și evenimente</h2>
+        <h2>Grup nou</h2>
         <form onSubmit={gestioneazaSubmit} className="grid">
-          <div className="input-row">
-            <label className="label" htmlFor="groupName">
-              Nume grup
-            </label>
-            <input
-              id="groupName"
-              value={numeGrup}
-              onChange={(e) => setNumeGrup(e.target.value)}
-              placeholder="Ex: Săptămâna 1"
-            />
-          </div>
+          <label className="label" htmlFor="groupName">Nume grup</label>
+          <input
+            id="groupName"
+            value={numeGrup}
+            onChange={(e) => setNumeGrup(e.target.value)}
+            placeholder="Ex: Saptamana 1"
+          />
 
           {randuriEvenimente.map((row, idx) => (
             <div key={idx} className="input-row">
@@ -179,7 +175,7 @@ const Organizator = ({ peDeschideEveniment }) => {
               <input
                 value={row.nume}
                 onChange={(e) => actualizeazaRand(idx, "nume", e.target.value)}
-                placeholder="Nume eveniment"
+                placeholder="Nume"
                 required
               />
               <input
@@ -198,11 +194,9 @@ const Organizator = ({ peDeschideEveniment }) => {
           ))}
 
           <div className="actions">
-            <button className="btn ghost" type="button" onClick={adaugaRand}>
-              Adaugă încă un eveniment
-            </button>
+            <button className="btn ghost" type="button" onClick={adaugaRand}>+ eveniment</button>
             <button className="btn primary" type="submit" disabled={seIncarca}>
-              {seIncarca ? "Se salvează..." : "Salvează grupul"}
+              {seIncarca ? "Se salveaza" : "Salveaza"}
             </button>
           </div>
           {mesaj && <p className="small">{mesaj}</p>}
@@ -211,14 +205,12 @@ const Organizator = ({ peDeschideEveniment }) => {
 
       <div className="surface">
         <div className="actions" style={{ justifyContent: "space-between" }}>
-          <h2 style={{ margin: 0 }}>Grupuri existente</h2>
-          <button className="btn ghost" type="button" onClick={incarcaGrupuri}>
-            Reîncarcă
-          </button>
+          <h2 style={{ margin: 0 }}>Grupuri</h2>
+          <button className="btn ghost" type="button" onClick={incarcaGrupuri}>Reload</button>
         </div>
 
-        {seIncarca && <p className="small">Se încarcă...</p>}
-        {!seIncarca && grupuri.length === 0 && <p>Nu există grupuri încă.</p>}
+        {seIncarca && <p className="small">Se incarca...</p>}
+        {!seIncarca && grupuri.length === 0 && <p>Nu exista grupuri.</p>}
 
         <div className="list">
           {grupuri.map((group) => (
@@ -229,12 +221,8 @@ const Organizator = ({ peDeschideEveniment }) => {
                   <div className="small">{group.evenimente.length} evenimente</div>
                 </div>
                 <div className="actions">
-                  <button className="btn ghost" onClick={() => exportaGrup(group.id)}>
-                    Export CSV grup
-                  </button>
-                  <button className="btn ghost danger" onClick={() => stergeGrupHandler(group.id)}>
-                    Șterge grup
-                  </button>
+                  <button className="btn ghost" onClick={() => exportaGrup(group.id)}>CSV</button>
+                  <button className="btn ghost danger" onClick={() => stergeGrupHandler(group.id)}>Sterge</button>
                 </div>
               </div>
 
@@ -244,24 +232,14 @@ const Organizator = ({ peDeschideEveniment }) => {
                     <div>
                       <div style={{ fontWeight: 600 }}>{eveniment.nume}</div>
                       <div className="small">Cod: {eveniment.cod}</div>
-                      <div className="small">
-                        {new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}
-                      </div>
+                      <div className="small">{new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}</div>
                     </div>
                     <div className="actions">
-                      <span
-                        className={`status-pill ${
-                          eveniment.status === "DESCHIS" ? "status-open" : "status-closed"
-                        }`}
-                      >
+                      <span className={`status-pill ${eveniment.status === "DESCHIS" ? "status-open" : "status-closed"}`}>
                         {etichetaStatus(eveniment.status)}
                       </span>
-                      <button className="btn primary" onClick={() => peDeschideEveniment(eveniment.id)}>
-                        Detalii
-                      </button>
-                      <button className="btn ghost danger" onClick={() => stergeEvenimentHandler(eveniment.id)}>
-                        Șterge
-                      </button>
+                      <button className="btn primary" onClick={() => peDeschideEveniment(eveniment.id)}>Detalii</button>
+                      <button className="btn ghost danger" onClick={() => stergeEvenimentHandler(eveniment.id)}>Sterge</button>
                     </div>
                   </div>
                 ))}
@@ -269,7 +247,7 @@ const Organizator = ({ peDeschideEveniment }) => {
 
               <div className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
                 <div className="actions" style={{ width: "100%", justifyContent: "space-between" }}>
-                  <div className="label">Eveniment nou în acest grup</div>
+                  <div className="label">Eveniment nou</div>
                   <button
                     className="btn ghost"
                     type="button"
@@ -281,7 +259,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                       })
                     }
                   >
-                    {extinse[group.id] ? "Ascunde" : "Adaugă"}
+                    {extinse[group.id] ? "Ascunde" : "Adauga"}
                   </button>
                 </div>
                 {extinse[group.id] && (
@@ -289,7 +267,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                     <input
                       value={formulareAdaugare[group.id]?.nume || ""}
                       onChange={(e) => actualizeazaFormularAdaugare(group.id, "nume", e.target.value)}
-                      placeholder="Nume eveniment"
+                      placeholder="Nume"
                     />
                     <input
                       type="datetime-local"
@@ -303,7 +281,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                     />
                     <div className="actions" style={{ gap: 8 }}>
                       <button className="btn primary" type="button" onClick={() => adaugaEveniment(group.id)} disabled={seIncarca}>
-                        {seIncarca ? "Se adaugă..." : "Adaugă în grup"}
+                        {seIncarca ? "Se adauga" : "Adauga"}
                       </button>
                       <button
                         className="btn text"
@@ -316,7 +294,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                           })
                         }
                       >
-                        Resetează
+                        Reset
                       </button>
                     </div>
                   </>

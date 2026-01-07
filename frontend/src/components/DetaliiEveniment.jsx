@@ -9,17 +9,18 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
   const [participanti, setParticipanti] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mesaj, setMesaj] = useState("");
-  const [qrData, setQrData] = useState("");
+  const [qr, setQr] = useState("");
 
   const load = async () => {
     try {
       setLoading(true);
       setMesaj("");
+      setQr("");
       const [ev, part] = await Promise.all([obtineEveniment(eventId), obtineParticipanti(eventId)]);
       setEveniment(ev);
       setParticipanti(part);
-      const dataUrl = await makeQrData(ev.cod);
-      setQrData(dataUrl);
+      const data = await makeQrData(ev.cod, 180);
+      setQr(data);
     } catch (err) {
       setMesaj(err.message || "Nu s-au putut încărca detaliile evenimentului.");
     } finally {
@@ -42,7 +43,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setMesaj(err.message || "Export nereușit.");
+      setMesaj(err.message || "Export ratat");
     }
   };
 
@@ -62,52 +63,28 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
         <div>
           <h2 style={{ margin: "0 0 4px" }}>{eveniment.nume}</h2>
           <div className="small">Cod: {eveniment.cod}</div>
-          <div className="small">
-            {new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}
-          </div>
+          <div className="small">{new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}</div>
         </div>
         <div className="actions">
           <span className={`status-pill ${statusClass}`}>{etichetaStatus(eveniment.status)}</span>
-          <button className="btn ghost" onClick={load} disabled={loading}>
-            Reîncarcă
-          </button>
-          <button className="btn primary" onClick={handleExport}>
-            Export CSV
-          </button>
-          <button className="btn text" onClick={onBack}>
-            Înapoi
-          </button>
+          <button className="btn ghost" onClick={load} disabled={loading}>Reload</button>
+          <button className="btn primary" onClick={handleExport}>CSV</button>
+          <button className="btn text" onClick={onBack}>Inapoi</button>
         </div>
       </div>
 
-      {qrData && (
-        <div className="list-item" style={{ margin: "14px 0" }}>
-          <div>
-            <strong>QR cod acces</strong>
-            <div className="small">Scanează sau descarcă pentru distribuire rapidă.</div>
-          </div>
-          <div className="actions" style={{ alignItems: "center" }}>
-            <img src={qrData} alt={`QR pentru ${eveniment.cod}`} width={140} height={140} />
-            <button
-              className="btn ghost"
-              onClick={() => {
-                const link = document.createElement("a");
-                link.href = qrData;
-                link.download = `eveniment-${eveniment.id}-qr.png`;
-                link.click();
-              }}
-            >
-              Descarcă PNG
-            </button>
-          </div>
+      {qr && (
+        <div style={{ marginTop: 8 }}>
+          <div className="small">QR pentru cod</div>
+          <img src={qr} alt="QR" style={{ width: 150, height: 150, border: "1px solid #e5e7eb" }} />
         </div>
       )}
 
       {mesaj && <p className="small" style={{ color: "#b91c1c" }}>{mesaj}</p>}
 
-      <h3>Participanți ({participanti.length})</h3>
+      <h3>Participanti ({participanti.length})</h3>
       <div className="list">
-        {participanti.length === 0 && <p>Niciun participant încă.</p>}
+        {participanti.length === 0 && <p>Nu sunt participanti inca.</p>}
         {participanti.map((p, idx) => (
           <div key={idx} className="list-item" style={{ justifyContent: "space-between" }}>
             <div>
