@@ -12,6 +12,14 @@ import {
 const evenimentGol = { nume: "", inceput: "", sfarsit: "", locatie: "", lat: "", lon: "" };
 const etichetaStatus = (status) => status;
 
+// Normalizes a `datetime-local` value to an ISO string (UTC) so times stay consistent regardless of server timezone
+const normalizareData = (valoare) => {
+  if (!valoare) return valoare;
+  const d = new Date(valoare);
+  if (Number.isNaN(d.getTime())) return valoare;
+  return d.toISOString();
+};
+
 // Dashboard-ul organizatorului: gestionare grupuri si evenimente
 const Organizator = ({ peDeschideEveniment }) => {
   const [numeGrup, setNumeGrup] = useState("");
@@ -98,7 +106,15 @@ const Organizator = ({ peDeschideEveniment }) => {
 
     try {
       setSeIncarca(true);
-      await creeazaGrup({ nume: numeGrup, evenimente: evenimenteValide });
+      await creeazaGrup({
+        nume: numeGrup,
+        evenimente: evenimenteValide.map((ev) =>
+          Object.assign({}, ev, {
+            inceput: normalizareData(ev.inceput),
+            sfarsit: normalizareData(ev.sfarsit),
+          })
+        ),
+      });
       setNumeGrup("");
       setRanduriEvenimente([Object.assign({}, evenimentGol)]);
       setMesaj("Grup creat cu succes.");
@@ -179,8 +195,8 @@ const Organizator = ({ peDeschideEveniment }) => {
       await adaugaEvenimenteLaGrup(groupId, [
         {
           nume: form.nume,
-          inceput: form.inceput,
-          sfarsit: form.sfarsit,
+          inceput: normalizareData(form.inceput),
+          sfarsit: normalizareData(form.sfarsit),
           locatie: form.locatie,
           lat: form.lat,
           lon: form.lon,
