@@ -10,6 +10,7 @@ import { adaugaStatus } from "../utils/utils.js";
 
 const grupEvenimenteRouter = express.Router();
 
+// GET /api/grupuri -> listeaza grupurile cu evenimente si statusurile lor
 grupEvenimenteRouter.get("/", async (req, res) => {
   try {
     const groups = await obtineGrupuri();
@@ -30,6 +31,7 @@ grupEvenimenteRouter.get("/", async (req, res) => {
   }
 });
 
+// POST /api/grupuri -> creeaza un grup cu evenimentele transmise
 grupEvenimenteRouter.post("/", async (req, res) => {
   try {
     const { nume, evenimente } = req.body || {};
@@ -43,6 +45,7 @@ grupEvenimenteRouter.post("/", async (req, res) => {
   }
 });
 
+// POST /api/grupuri/:id/evenimente -> adauga evenimente noi intr-un grup
 grupEvenimenteRouter.post("/:id/evenimente", async (req, res) => {
   try {
     const { evenimente } = req.body || {};
@@ -58,6 +61,7 @@ grupEvenimenteRouter.post("/:id/evenimente", async (req, res) => {
   }
 });
 
+// DELETE /api/grupuri/:id -> sterge grupul si evenimentele lui
 grupEvenimenteRouter.delete("/:id", async (req, res) => {
   const deleted = await stergeGrupDupaId(req.params.id);
   if (!deleted) return res.status(404).json({ error: "Grupul nu există." });

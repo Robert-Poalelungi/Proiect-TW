@@ -3,6 +3,7 @@ import env from "dotenv";
 
 env.config();
 
+// Config Sequelize pe baza variabilelor de mediu (.env) cu fallback-uri implicite
 const db = new Sequelize({
   dialect: process.env.DB_DIALECT || "mysql",
   host: process.env.DB_HOST || "localhost",

@@ -4,6 +4,7 @@ import { adaugaStatus } from "../utils/utils.js";
 
 const inscriereRouter = express.Router();
 
+// POST /api/inscriere -> inscrie participant dupa cod si nume
 inscriereRouter.post("/", async (req, res) => {
   const { cod, nume } = req.body || {};
   const result = await inscrieParticipantCuCod(cod, nume);

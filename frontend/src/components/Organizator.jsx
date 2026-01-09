@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   adaugaEvenimenteLaGrup,
+  cautaLocatie,
   creeazaGrup,
   stergeEveniment,
   stergeGrup,
@@ -8,9 +9,10 @@ import {
   obtineGrupuri,
 } from "../api";
 
-const evenimentGol = { nume: "", inceput: "", sfarsit: "" };
+const evenimentGol = { nume: "", inceput: "", sfarsit: "", locatie: "", lat: "", lon: "" };
 const etichetaStatus = (status) => status;
 
+// Dashboard-ul organizatorului: gestionare grupuri si evenimente
 const Organizator = ({ peDeschideEveniment }) => {
   const [numeGrup, setNumeGrup] = useState("");
   const [randuriEvenimente, setRanduriEvenimente] = useState([Object.assign({}, evenimentGol)]);
@@ -19,7 +21,11 @@ const Organizator = ({ peDeschideEveniment }) => {
   const [mesaj, setMesaj] = useState("");
   const [formulareAdaugare, setFormulareAdaugare] = useState({});
   const [extinse, setExtinse] = useState({});
+  const [geocodeLoadingCreate, setGeocodeLoadingCreate] = useState(false);
+  const [geocodeLoadingAdd, setGeocodeLoadingAdd] = useState({});
+  const [mesajeGrup, setMesajeGrup] = useState({});
 
+  // Incarca grupurile si evenimentele existente
   const incarcaGrupuri = async () => {
     try {
       setSeIncarca(true);
@@ -36,6 +42,7 @@ const Organizator = ({ peDeschideEveniment }) => {
     incarcaGrupuri();
   }, []);
 
+  // Actualizeaza un camp dintr-un rand de eveniment din formular
   const actualizeazaRand = (index, key, value) => {
     const copie = randuriEvenimente.slice();
     copie[index] = Object.assign({}, copie[index], { [key]: value });
@@ -43,6 +50,40 @@ const Organizator = ({ peDeschideEveniment }) => {
   };
 
   const adaugaRand = () => setRanduriEvenimente((prev) => prev.concat([Object.assign({}, evenimentGol)]));
+
+  const stergeRand = (index) => {
+    setRanduriEvenimente((prev) => {
+      if (prev.length <= 1) return [Object.assign({}, evenimentGol)];
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  // Geocodare pentru un rand din formularul de creare
+  const cautaCoordonate = async (index) => {
+    const valoare = randuriEvenimente[index]?.locatie;
+    if (!valoare) {
+      setMesaj("Completează o adresă pentru a căuta coordonatele.");
+      return;
+    }
+    try {
+      setGeocodeLoadingCreate(true);
+      setMesaj("");
+      const rezultat = await cautaLocatie(valoare);
+      setRanduriEvenimente((prev) => {
+        const copie = prev.slice();
+        const curent = copie[index] ? Object.assign({}, copie[index]) : Object.assign({}, evenimentGol);
+        curent.lat = rezultat.lat?.toString() || "";
+        curent.lon = rezultat.lon?.toString() || "";
+        copie[index] = curent;
+        return copie;
+      });
+      setMesaj(`Adresă găsită: ${rezultat.adresa}`);
+    } catch (err) {
+      setMesaj(err.message || "Nu am putut găsi locația.");
+    } finally {
+      setGeocodeLoadingCreate(false);
+    }
+  };
 
   const gestioneazaSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +110,7 @@ const Organizator = ({ peDeschideEveniment }) => {
     }
   };
 
+  // Export CSV pentru un grup
   const exportaGrup = async (groupId) => {
     try {
       const res = await exportaGrupCsv(groupId);
@@ -84,6 +126,7 @@ const Organizator = ({ peDeschideEveniment }) => {
     }
   };
 
+  // Sterge un eveniment individual
   const stergeEvenimentHandler = async (eventId) => {
     if (!window.confirm("Ștergi acest eveniment?")) return;
     try {
@@ -98,6 +141,7 @@ const Organizator = ({ peDeschideEveniment }) => {
     }
   };
 
+  // Sterge un grup si toate evenimentele lui
   const stergeGrupHandler = async (groupId) => {
     if (!window.confirm("Ștergi întreg grupul și toate evenimentele lui?")) return;
     try {
@@ -112,6 +156,7 @@ const Organizator = ({ peDeschideEveniment }) => {
     }
   };
 
+  // Sincronizeaza formularul de adaugare eveniment intr-un grup existent
   const actualizeazaFormularAdaugare = (groupId, key, value) => {
     setFormulareAdaugare((prev) => {
       const urmator = Object.assign({}, prev);
@@ -122,10 +167,11 @@ const Organizator = ({ peDeschideEveniment }) => {
     });
   };
 
+  // Adauga un eveniment nou intr-un grup existent
   const adaugaEveniment = async (groupId) => {
     const form = formulareAdaugare[groupId] || {};
     if (!form.nume || !form.inceput || !form.sfarsit) {
-      setMesaj("Completează nume, start și end pentru eveniment.");
+      setMesajeGrup((prev) => Object.assign({}, prev, { [groupId]: "Completează nume, start și end pentru eveniment." }));
       return;
     }
     try {
@@ -135,12 +181,15 @@ const Organizator = ({ peDeschideEveniment }) => {
           nume: form.nume,
           inceput: form.inceput,
           sfarsit: form.sfarsit,
+          locatie: form.locatie,
+          lat: form.lat,
+          lon: form.lon,
         },
       ]);
-      setMesaj("Eveniment adăugat în grup.");
+      setMesajeGrup((prev) => Object.assign({}, prev, { [groupId]: "Eveniment adăugat în grup." }));
       setFormulareAdaugare((prev) => {
         const urmator = Object.assign({}, prev);
-        urmator[groupId] = { nume: "", inceput: "", sfarsit: "" };
+        urmator[groupId] = { nume: "", inceput: "", sfarsit: "", locatie: "", lat: "", lon: "" };
         return urmator;
       });
       setExtinse((prev) => {
@@ -150,15 +199,16 @@ const Organizator = ({ peDeschideEveniment }) => {
       });
       await incarcaGrupuri();
     } catch (err) {
-      setMesaj(err.message || "Nu s-a putut adăuga evenimentul.");
+      setMesajeGrup((prev) => Object.assign({}, prev, { [groupId]: err.message || "Nu s-a putut adăuga evenimentul." }));
     } finally {
       setSeIncarca(false);
     }
   };
 
   return (
-    <div className="grid two-col">
-      <div className="surface">
+    <div className="dual-card">
+      {/* Panou stânga: creare grup + evenimente noi */}
+      <div className="dual-pane">
         <h2>Creează grup și evenimente</h2>
         <form onSubmit={gestioneazaSubmit} className="grid">
           <div className="input-row">
@@ -194,6 +244,36 @@ const Organizator = ({ peDeschideEveniment }) => {
                 onChange={(e) => actualizeazaRand(idx, "sfarsit", e.target.value)}
                 required
               />
+              <input
+                value={row.locatie}
+                onChange={(e) => actualizeazaRand(idx, "locatie", e.target.value)}
+                placeholder="Locație"
+              />
+              <div className="actions" style={{ gap: 8 }}>
+                <input
+                  value={row.lat}
+                  onChange={(e) => actualizeazaRand(idx, "lat", e.target.value)}
+                  placeholder="Latitudine"
+                />
+                <input
+                  value={row.lon}
+                  onChange={(e) => actualizeazaRand(idx, "lon", e.target.value)}
+                  placeholder="Longitudine"
+                />
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => cautaCoordonate(idx)}
+                  disabled={geocodeLoadingCreate}
+                >
+                  {geocodeLoadingCreate ? "Caută..." : "Găsește coordonate"}
+                </button>
+                {randuriEvenimente.length > 1 && (
+                  <button className="btn ghost danger" type="button" onClick={() => stergeRand(idx)}>
+                    Șterge eveniment
+                  </button>
+                )}
+              </div>
             </div>
           ))}
 
@@ -209,12 +289,10 @@ const Organizator = ({ peDeschideEveniment }) => {
         </form>
       </div>
 
-      <div className="surface">
+      {/* Panou dreapta: listare grupuri existente și acțiuni */}
+      <div className="dual-pane">
         <div className="actions" style={{ justifyContent: "space-between" }}>
           <h2 style={{ margin: 0 }}>Grupuri existente</h2>
-          <button className="btn ghost" type="button" onClick={incarcaGrupuri}>
-            Reîncarcă
-          </button>
         </div>
 
         {seIncarca && <p className="small">Se încarcă...</p>}
@@ -222,7 +300,7 @@ const Organizator = ({ peDeschideEveniment }) => {
 
         <div className="list">
           {grupuri.map((group) => (
-            <div key={group.id} className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+            <div key={group.id} className="list-item group-card" style={{ flexDirection: "column", alignItems: "flex-start" }}>
               <div className="actions" style={{ width: "100%", justifyContent: "space-between" }}>
                 <div>
                   <strong>{group.nume}</strong>
@@ -240,13 +318,17 @@ const Organizator = ({ peDeschideEveniment }) => {
 
               <div className="list" style={{ width: "100%" }}>
                 {group.evenimente.map((eveniment) => (
-                  <div key={eveniment.id} className="list-item">
+                  <div key={eveniment.id} className="list-item event-row">
                     <div>
                       <div style={{ fontWeight: 600 }}>{eveniment.nume}</div>
                       <div className="small">Cod: {eveniment.cod}</div>
                       <div className="small">
                         {new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}
                       </div>
+                      {eveniment.locatie && <div className="small">Locație: {eveniment.locatie}</div>}
+                      {eveniment.lat !== null && eveniment.lon !== null && eveniment.lat !== undefined && eveniment.lon !== undefined && (
+                        <div className="small">Coordonate: {eveniment.lat}, {eveniment.lon}</div>
+                      )}
                     </div>
                     <div className="actions">
                       <span
@@ -267,7 +349,8 @@ const Organizator = ({ peDeschideEveniment }) => {
                 ))}
               </div>
 
-              <div className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+              {/* Formular de adăugare rapidă pentru un grup extins */}
+              <div className="list-item no-separator" style={{ flexDirection: "column", alignItems: "flex-start" }}>
                 <div className="actions" style={{ width: "100%", justifyContent: "space-between" }}>
                   <div className="label">Eveniment nou în acest grup</div>
                   <button
@@ -301,6 +384,55 @@ const Organizator = ({ peDeschideEveniment }) => {
                       value={formulareAdaugare[group.id]?.sfarsit || ""}
                       onChange={(e) => actualizeazaFormularAdaugare(group.id, "sfarsit", e.target.value)}
                     />
+                    <input
+                      value={formulareAdaugare[group.id]?.locatie || ""}
+                      onChange={(e) => actualizeazaFormularAdaugare(group.id, "locatie", e.target.value)}
+                      placeholder="Locație"
+                    />
+                    <div className="actions" style={{ gap: 8 }}>
+                      <input
+                        value={formulareAdaugare[group.id]?.lat || ""}
+                        onChange={(e) => actualizeazaFormularAdaugare(group.id, "lat", e.target.value)}
+                        placeholder="Latitudine"
+                      />
+                      <input
+                        value={formulareAdaugare[group.id]?.lon || ""}
+                        onChange={(e) => actualizeazaFormularAdaugare(group.id, "lon", e.target.value)}
+                        placeholder="Longitudine"
+                      />
+                      <button
+                        className="btn ghost"
+                        type="button"
+                        onClick={async () => {
+                          const adresa = (formulareAdaugare[group.id]?.locatie || "").trim();
+                          if (!adresa) {
+                            setMesajeGrup((prev) => Object.assign({}, prev, { [group.id]: "Completează o adresă pentru a căuta coordonatele." }));
+                            return;
+                          }
+                          try {
+                            setGeocodeLoadingAdd((prev) => Object.assign({}, prev, { [group.id]: true }));
+                            const rezultat = await cautaLocatie(adresa);
+                            setFormulareAdaugare((prev) => {
+                              const urmator = Object.assign({}, prev);
+                              urmator[group.id] = Object.assign({}, urmator[group.id] || {}, {
+                                lat: rezultat.lat?.toString() || "",
+                                lon: rezultat.lon?.toString() || "",
+                              });
+                              return urmator;
+                            });
+                            setMesajeGrup((prev) => Object.assign({}, prev, { [group.id]: `Adresă găsită: ${rezultat.adresa}` }));
+                          } catch (err) {
+                            setMesajeGrup((prev) => Object.assign({}, prev, { [group.id]: err.message || "Nu am putut găsi locația." }));
+                          } finally {
+                            setGeocodeLoadingAdd((prev) => Object.assign({}, prev, { [group.id]: false }));
+                          }
+                        }}
+                        disabled={!!geocodeLoadingAdd[group.id]}
+                      >
+                        {geocodeLoadingAdd[group.id] ? "Caută..." : "Găsește coordonate"}
+                      </button>
+                    </div>
+                    {mesajeGrup[group.id] && <p className="small">{mesajeGrup[group.id]}</p>}
                     <div className="actions" style={{ gap: 8 }}>
                       <button className="btn primary" type="button" onClick={() => adaugaEveniment(group.id)} disabled={seIncarca}>
                         {seIncarca ? "Se adaugă..." : "Adaugă în grup"}
@@ -311,7 +443,7 @@ const Organizator = ({ peDeschideEveniment }) => {
                         onClick={() =>
                           setFormulareAdaugare((prev) => {
                             const urmator = Object.assign({}, prev);
-                            urmator[group.id] = { nume: "", inceput: "", sfarsit: "" };
+                            urmator[group.id] = { nume: "", inceput: "", sfarsit: "", locatie: "", lat: "", lon: "" };
                             return urmator;
                           })
                         }

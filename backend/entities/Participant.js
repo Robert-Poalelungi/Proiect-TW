@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import db from "../dbConfig.js";
 
+// Modelul Sequelize pentru Participant
 const Participant = db.define("Participant", {
   id: {
     type: DataTypes.INTEGER,

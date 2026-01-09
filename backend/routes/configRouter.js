@@ -4,6 +4,7 @@ import configureAssociations from "../entities/associations.js";
 
 const configRouter = express.Router();
 
+// GET /api/config/init -> sincronizeaza schema fara a sterge datele
 configRouter.get("/init", async (req, res) => {
   try {
     configureAssociations();
@@ -14,6 +15,7 @@ configRouter.get("/init", async (req, res) => {
   }
 });
 
+// GET /api/config/reset -> recreeaza schema (sterge toate datele!)
 configRouter.get("/reset", async (req, res) => {
   try {
     configureAssociations();
@@ -24,6 +26,7 @@ configRouter.get("/reset", async (req, res) => {
   }
 });
 
+// GET /api/config/status -> verifica conexiunea la DB
 configRouter.get("/status", async (req, res) => {
   try {
     await db.authenticate();

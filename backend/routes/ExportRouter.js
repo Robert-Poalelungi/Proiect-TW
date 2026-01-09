@@ -10,6 +10,7 @@ const trimiteCsv = (res, filename, lines) => {
   res.send(lines.join("\n"));
 };
 
+// GET /api/export/eveniment/:id -> exporta CSV cu participantii unui eveniment
 exportRouter.get("/eveniment/:id", async (req, res) => {
   const ev = await gasesteEvenimentDupaId(req.params.id);
   if (!ev) return res.status(404).json({ error: "Evenimentul nu există." });
@@ -23,6 +24,7 @@ exportRouter.get("/eveniment/:id", async (req, res) => {
   trimiteCsv(res, `eveniment-${ev.id}.csv`, lines);
 });
 
+// GET /api/export/grup/:id -> exporta CSV cu participantii tuturor evenimentelor din grup
 exportRouter.get("/grup/:id", async (req, res) => {
   const group = await gasesteGrup(req.params.id);
   if (!group) return res.status(404).json({ error: "Grupul nu există." });

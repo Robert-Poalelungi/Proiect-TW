@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import db from "../dbConfig.js";
 
+// Definirea modelului Eveniment (Sequelize)
 const Eveniment = db.define("Eveniment", {
   id: {
     type: DataTypes.INTEGER,
@@ -24,6 +25,18 @@ const Eveniment = db.define("Eveniment", {
     type: DataTypes.STRING(16),
     allowNull: false,
     unique: true,
+  },
+  locatie: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  lat: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  lon: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
   },
   idGrup: {
     type: DataTypes.INTEGER,

@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import db from "../dbConfig.js";
 
+// Modelul Sequelize pentru GrupEvenimente
 const GrupEvenimente = db.define("GrupEvenimente", {
   id: {
     type: DataTypes.INTEGER,

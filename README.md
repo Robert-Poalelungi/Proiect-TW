@@ -1,8 +1,34 @@
-# 📘 Monitorizare Prezență -- Proiect Tehnologii Web
+# 📘 Prezență -- Proiect Tehnologii Web
 
 **Aplicație Web SPA (React) + Backend Minimal (Node & Express)**\
 **Autor:** *\[Numele tău\]*\
 **Materie:** Tehnologii Web
+
+------------------------------------------------------------------------
+
+# 📝 0. Cerințe generale proiect
+
+## 🎯 Obiectiv general
+- Realizarea unei aplicații pe una dintre temele specificate, cu backend RESTful care accesează date stocate într-o bază relațională, un API de persistență și date expuse de un serviciu extern, plus frontend SPA realizat cu un framework bazat pe componente.
+
+## 🛠️ Limitări tehnologice
+- Frontend cu framework bazat pe componente (React.js/Angular/Vue.js).
+- Backend cu interfață REST și implementare în Node.js.
+- Stocare peste bază de date relațională, acces prin ORM.
+- Cod versionat în Git cu commit-uri incrementale și descrieri clare.
+- Aplicația trebuie deployată pe un server (tier free acceptat: Azure/AWS etc.).
+
+## 🎨 Stil și calitate a codului
+- Aplicație coerentă din punct de vedere al logicii de business.
+- Cod organizat, nume sugestive, convenție unitară (e.g. camelCase), indentare corectă.
+- Cod documentat cu comentarii la clase, funcții etc.
+- Aplicațiile nefuncționale nu primesc punctaj; se poate demonstra doar backend sau frontend.
+- Opțional: test coverage.
+
+## 🗓️ Livrabile parțiale
+- 16.11.2025: specificații detaliate, plan de proiect, proiect inițial în Git.
+- 06.12.2025: serviciu RESTful funcțional în repository + instrucțiuni de rulare.
+- Ultimul seminar: aplicația completă (demo) livrată.
 
 ------------------------------------------------------------------------
 
@@ -348,6 +374,18 @@ Export CSV pentru toate evenimentele unui grup.
 
 ------------------------------------------------------------------------
 
+# 🎨 Paletă de culori (UI)
+
+-   Primar: #574d68 (fundal header, text accent) și #f5f3f8 (text pe fond închis)
+-   Accent verde: gradient #afc97e → #8da965 (butoane primare)
+-   Fundal app: #d3cdd7 (background global și contururi soft)
+-   Suprafețe: #ffffff → #f1eff5 (gradienți carduri/panouri), borduri #d3cdd7
+-   Text secundar: #574d68, #0e1116
+-   Status OPEN: fond rgba(46, 204, 113, 0.18), contur #2ecc71, text #1c7c3a
+-   Status CLOSED / pericol: fond rgba(231, 76, 60, 0.18), contur #e74c3c, text #c1121f / #b42318
+
+------------------------------------------------------------------------
+
 # 🧪 10. Scenarii de testare
 
   Scenariu                                        Rezultat
@@ -366,16 +404,12 @@ Export CSV pentru toate evenimentele unui grup.
 -   datele sunt stocate doar în memorie (se șterg la restart),
 -   UI simplu (cerință minimă),
 -   fără autentificare,
--   nu există scanare QR (opțional),
- -   include scanare QR din cameră (frontend),
 -   nu există baze de date.
 
 ------------------------------------------------------------------------
 
 # 🚀 12. Îmbunătățiri posibile
 
--   generare cod QR,
--   scanare QR cu camera,
 -   integrare bază de date (Mongo / SQLite),
 -   sistem de login pentru organizator,
 -   React Router,

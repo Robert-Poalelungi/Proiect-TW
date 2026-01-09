@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { exportaEvenimentCsv, obtineEveniment, obtineParticipanti } from "../api";
-import { makeQrData } from "../qr";
 
+// Mapare simpla a statusului (poate fi extinsa ulterior pentru traduceri)
 const etichetaStatus = (status) => status;
 
+// Afișează detalii despre un eveniment și lista participanților
 const DetaliiEveniment = ({ eventId, onBack }) => {
   const [eveniment, setEveniment] = useState(null);
   const [participanti, setParticipanti] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mesaj, setMesaj] = useState("");
-  const [qrData, setQrData] = useState("");
 
+  // Încarcă evenimentul și participanții în paralel
   const load = async () => {
     try {
       setLoading(true);
@@ -18,8 +19,6 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
       const [ev, part] = await Promise.all([obtineEveniment(eventId), obtineParticipanti(eventId)]);
       setEveniment(ev);
       setParticipanti(part);
-      const dataUrl = await makeQrData(ev.cod);
-      setQrData(dataUrl);
     } catch (err) {
       setMesaj(err.message || "Nu s-au putut încărca detaliile evenimentului.");
     } finally {
@@ -31,6 +30,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
     load();
   }, [eventId]);
 
+  // Descarcă CSV pentru evenimentul curent
   const handleExport = async () => {
     try {
       const res = await exportaEvenimentCsv(eventId);
@@ -48,7 +48,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
 
   if (!eveniment) {
     return (
-      <div className="surface">
+      <div className="detail-card">
         <p>Se încarcă detaliile evenimentului...</p>
       </div>
     );
@@ -57,7 +57,7 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
   const statusClass = eveniment.status === "DESCHIS" ? "status-open" : "status-closed";
 
   return (
-    <div className="surface">
+    <div className="detail-card">
       <div className="actions" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <h2 style={{ margin: "0 0 4px" }}>{eveniment.nume}</h2>
@@ -65,45 +65,36 @@ const DetaliiEveniment = ({ eventId, onBack }) => {
           <div className="small">
             {new Date(eveniment.inceput).toLocaleString()} — {new Date(eveniment.sfarsit).toLocaleString()}
           </div>
+          {eveniment.locatie && <div className="small">Locație: {eveniment.locatie}</div>}
+          {eveniment.lat !== null && eveniment.lon !== null && eveniment.lat !== undefined && eveniment.lon !== undefined && (
+            <div className="small">
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${eveniment.lat}&mlon=${eveniment.lon}#map=15/${eveniment.lat}/${eveniment.lon}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Vezi pe hartă
+              </a>
+            </div>
+          )}
         </div>
         <div className="actions">
           <span className={`status-pill ${statusClass}`}>{etichetaStatus(eveniment.status)}</span>
-          <button className="btn ghost" onClick={load} disabled={loading}>
-            Reîncarcă
-          </button>
           <button className="btn primary" onClick={handleExport}>
             Export CSV
           </button>
-          <button className="btn text" onClick={onBack}>
+          <button className="btn ghost back" onClick={onBack}>
             Înapoi
           </button>
         </div>
       </div>
 
-      {qrData && (
-        <div className="list-item" style={{ margin: "14px 0" }}>
-          <div>
-            <strong>QR cod acces</strong>
-            <div className="small">Scanează sau descarcă pentru distribuire rapidă.</div>
-          </div>
-          <div className="actions" style={{ alignItems: "center" }}>
-            <img src={qrData} alt={`QR pentru ${eveniment.cod}`} width={140} height={140} />
-            <button
-              className="btn ghost"
-              onClick={() => {
-                const link = document.createElement("a");
-                link.href = qrData;
-                link.download = `eveniment-${eveniment.id}-qr.png`;
-                link.click();
-              }}
-            >
-              Descarcă PNG
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="code-box">
+        <div className="small">Cod acces</div>
+        <div className="code-value">{eveniment.cod}</div>
+      </div>
 
-      {mesaj && <p className="small" style={{ color: "#b91c1c" }}>{mesaj}</p>}
+      {mesaj && <p className="small" style={{ color: "#c1121f" }}>{mesaj}</p>}
 
       <h3>Participanți ({participanti.length})</h3>
       <div className="list">

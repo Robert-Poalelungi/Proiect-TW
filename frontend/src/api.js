@@ -1,5 +1,6 @@
 const API_BASE = "/api";
 
+// Helper generic pentru request-uri JSON catre backend
 async function request(path, options = {}) {
   const mergedHeaders = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
   const fetchOptions = Object.assign({}, options, { headers: mergedHeaders });
@@ -34,6 +35,8 @@ export const inscrieLaEveniment = (payload) =>
 export const obtineEveniment = (eventId) => request(`/evenimente/${eventId}`);
 
 export const obtineParticipanti = (eventId) => request(`/evenimente/${eventId}/participants`);
+
+export const cautaLocatie = (query) => request(`/extern/locatie?q=${encodeURIComponent(query)}`);
 
 export const stergeEveniment = (eventId) =>
   request(`/evenimente/${eventId}`, {
